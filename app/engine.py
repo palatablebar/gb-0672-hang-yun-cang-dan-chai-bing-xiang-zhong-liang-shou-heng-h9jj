@@ -9,14 +9,20 @@ from app.manifest import digest, make_manifest
 def evaluate(payload=None, until=7, snapshot=None):
     payload=payload or {}
     dataset=payload.get('dataset','dirty')
-    if dataset not in {'dirty','clean','legacy'}: raise BusinessError('BAD_DATASET','样例名称无效')
+    if dataset not in {'dirty','clean','legacy','caliber'}: raise BusinessError('BAD_DATASET','样例名称无效')
     if not isinstance(payload.get('overrides',{}),dict): raise BusinessError('BAD_CONTEXT','参数须为对象')
     raw=(base64.b64decode(snapshot['bytes_b64'],validate=True) if snapshot is not None else (str(payload['csv_text']).encode() if 'csv_text' in payload else (ROOT/'sample_data'/f'{dataset}.csv').read_bytes()))
     if len(raw)>MAX_BYTES: raise BusinessError('TOO_LARGE','文件超过2MB',413)
     context=deepcopy(snapshot['context']) if snapshot is not None else json.loads((ROOT/'sample_data/context.json').read_text())
+    if snapshot is None:
+        context.update(deepcopy(context.get('dataset_overlays',{}).get(dataset,{})))
     context.update(deepcopy(payload.get('overrides',{})))
+    caliber=payload.get('caliber','auto')
+    if caliber not in {'auto','force_new'}: raise BusinessError('BAD_CALIBER','口径策略无效')
+    # 显式赋值：重跑快照可能携带旧策略，必须以本次请求为准，且策略参与摘要使不同口径产生不同批号
+    context['caliber_policy']=caliber
     start=time.perf_counter()
-    state={'raw_bytes':raw,'context':context,'records':[],'quarantine':[], 'counts':{},'views':{},'source':dataset}
+    state={'raw_bytes':raw,'context':context,'records':[],'quarantine':[], 'counts':{},'views':{},'source':dataset,'caliber_policy':caliber}
     for index,key in enumerate(MODULES,1):
         if index>until: break
         import_module(f'app.modules.{key}.rules').apply(state)

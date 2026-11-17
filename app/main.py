@@ -33,6 +33,24 @@ def rerun(run_id:str):
     if 'input_snapshot' not in previous:
         raise BusinessError('INPUT_SNAPSHOT_MISSING','旧批缺少源快照，请重新导入')
     return store.save(DB_PATH,evaluate({'dataset':previous['source']},snapshot=previous['input_snapshot']))
+@app.post('/api/runs/{run_id}/caliber')
+def switch_caliber(run_id:str,payload:dict=Body(default={})):
+    previous=store.get(DB_PATH,run_id)
+    # 已复核舱单不得被悄悄改写：复核锁优先于一切重算
+    if previous.get('status')=='已复核':
+        raise BusinessError('CALIBER_LOCKED','批次已复核，口径锁定；如需切换请先创建新批次',409)
+    if 'input_snapshot' not in previous:
+        raise BusinessError('INPUT_SNAPSHOT_MISSING','旧批缺少源快照，请重新导入')
+    policy=payload.get('caliber','force_new')
+    if policy not in {'auto','force_new'}:
+        raise BusinessError('BAD_CALIBER','口径策略无效')
+    candidate=evaluate({'dataset':previous['source'],'caliber':policy},snapshot=previous['input_snapshot'])
+    # 切换失败：返回原批次结果与原值，不落库任何候选结果（恢复原有结果并保留原值）
+    if candidate.get('caliber_switch_failed'):
+        failed=[d for d in candidate['caliber_decisions'] if not d['resolved']]
+        raise BusinessError('CALIBER_SWITCH_FAILED',
+                            '口径切换失败，已回滚保留原值：'+ '；'.join(d['basis'] for d in failed),422)
+    return store.save(DB_PATH,candidate)
 @app.get('/api/runs')
 def runs():
     return store.history(DB_PATH)

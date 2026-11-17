@@ -1,5 +1,5 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 import unicodedata, re
 from app.config import SENTINELS
 from app.errors import BusinessError
@@ -34,3 +34,12 @@ def instant(value):
 
 def decstr(value):
     return format(value, 'f') if isinstance(value, Decimal) else value
+
+def doc_date(value):
+    text = unicodedata.normalize('NFKC', str(value)).strip()
+    if not text:
+        raise BusinessError('BAD_DATE', '单据日期缺失')
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise BusinessError('BAD_DATE', '单据日期须为 YYYY-MM-DD')

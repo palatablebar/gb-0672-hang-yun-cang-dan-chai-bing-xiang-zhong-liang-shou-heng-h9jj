@@ -13,6 +13,29 @@
     "pallet": "10",
     "箱": "1"
   },
+  "effective_date": "2026-01-01",
+  "received_at": "2025-12-20",
+  "calibers": {
+    "old": {
+      "label": "旧口径（2026-01-01 前生效）",
+      "packages": {
+        "carton": "1",
+        "pallet": "10",
+        "箱": "1",
+        "托": "10",
+        "roll": "1",
+        "bundle": "2"
+      }
+    },
+    "new": {
+      "label": "新口径（2026-01-01 起生效）",
+      "packages": {
+        "carton": "1",
+        "pallet": "12",
+        "箱": "1"
+      }
+    }
+  },
   "hazards": [
     "3",
     "5.1",
@@ -28,5 +51,15 @@
     "pieces": 240,
     "net_kg": "2400",
     "gross_kg": "2640"
+  },
+  "dataset_overlays": {
+    "caliber": {
+      "received_at": "2026-01-05",
+      "declaration": {
+        "pieces": 168,
+        "net_kg": "1200",
+        "gross_kg": "1320"
+      }
+    }
   }
 }

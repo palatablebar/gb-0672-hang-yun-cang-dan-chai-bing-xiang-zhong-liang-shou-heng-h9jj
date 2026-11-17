@@ -1,1 +1,52 @@
-{% extends 'base.html' %}{% block content %}<div class="sheet-grid"><section class="panel index"><h2>装箱索引<sup>1</sup></h2>{% for root in state.graph.roots %}<details open><summary>{{ root }}</summary>{% for child in state.graph.children[root] %}<div class="branch">{{ child }}<small>{{ state.graph.children[child]|length }} 项</small></div>{% endfor %}</details>{% endfor %}</section><section class="panel data-panel"><h2>包装映射<sup>2</sup><small>{{ view.rows|length }} 条</small></h2>{{ records(view.rows) }}</section><div class="right-column"><section class="panel"><h2>净毛重校验</h2>{% for row in state.weight_checks[:6] %}<div class="checkline"><b>{{ row.id }}</b><span>{{ row.field }}</span><span class="{% if row.code!='BALANCED' %}fail{% endif %}">{{ row.difference }}</span></div>{% endfor %}</section><section class="panel"><h2>阻断凭据<sup>3</sup></h2>{{ records(state.hazard_issues+state.graph.errors) }}</section><section class="panel"><h2>采信隔离</h2>{{ records(state.quarantine) }}</section></div></div>{% endblock %}
+{% extends 'base.html' %}{% block content %}
+<div class="sheet-grid">
+  <section class="panel index">
+    <h2>装箱索引<sup>1</sup></h2>
+    {% for root in state.graph.roots %}<details open><summary>{{ root }}</summary>
+      {% for child in state.graph.children[root] %}<div class="branch">{{ child }}<small>{{ state.graph.children[child]|length }} 项</small></div>{% endfor %}
+    </details>{% endfor %}
+  </section>
+  <section class="panel data-panel">
+    <h2>双口径计量核对<sup>2</sup><small>{{ view.dual_rows|length }} 条 · 生效 {{ view.metrics['生效日期'] }} / 接收 {{ view.metrics['接收日期'] }}</small></h2>
+    <div class="caliber-actions">
+      <button id="caliber-auto" type="button">按单据日期自动裁决（auto）</button>
+      <button id="caliber-new" type="button">接收批次统一新口径（force_new）</button>
+      <output id="caliber-message" aria-live="polite"></output>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>提单编号</th><th>单据日期</th><th>包装</th><th>跨档</th>
+          <th>旧·件数</th><th>旧·净重</th><th>旧·毛重</th><th>旧口径</th>
+          <th>新·件数</th><th>新·净重</th><th>新·毛重</th><th>新口径</th>
+          <th>采用口径</th><th>采用件数</th><th>采用净重</th><th>采用毛重</th><th>采用依据</th>
+        </tr></thead>
+        <tbody>
+        {% for r in view.dual_rows %}
+          <tr class="{% if r.cross_period=='是' %}cross{% endif %}">
+            <td class="num">{{ r.id }}</td><td class="num">{{ r.doc_date }}</td><td class="num">{{ r.packages }} {{ r.package_unit }}</td>
+            <td class="num">{{ r.cross_period }}</td>
+            <td class="num">{{ r.old_pieces }}</td><td class="num">{{ r.old_net_kg }}</td><td class="num">{{ r.old_gross_kg }}</td><td class="num">{{ r.old_convertible }}</td>
+            <td class="num">{{ r.new_pieces }}</td><td class="num">{{ r.new_net_kg }}</td><td class="num">{{ r.new_gross_kg }}</td><td class="num">{{ r.new_convertible }}</td>
+            <td class="num adopted">{{ r.adopted_caliber }}</td><td class="num">{{ r.adopted_pieces }}</td><td class="num">{{ r.adopted_net_kg }}</td><td class="num">{{ r.adopted_gross_kg }}</td>
+            <td class="num basis" title="{{ r.adopt_basis }}">{{ r.adopt_basis }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h2>包装映射明细（采用口径工作值）<small>{{ view.rows|length }} 条</small></h2>
+    {{ records(view.rows) }}
+  </section>
+  <div class="right-column">
+    <section class="panel">
+      <h2>口径裁决</h2>
+      {% for d in state.caliber_decisions %}
+      <div class="checkline"><b>{{ d.id }}</b><span class="{% if not d.resolved %}fail{% endif %}">{{ d.adopted_caliber }}{% if not d.resolved %}·未裁决{% endif %}</span><span title="{{ d.basis }}">{{ '跨档' if d.cross_period else '同档' }}</span></div>
+      {% endfor %}
+    </section>
+    <section class="panel"><h2>净毛重校验</h2>{% for row in state.weight_checks[:6] %}<div class="checkline"><b>{{ row.id }}</b><span>{{ row.field }}</span><span class="{% if row.code!='BALANCED' %}fail{% endif %}">{{ row.difference }}</span></div>{% endfor %}</section>
+    <section class="panel"><h2>阻断凭据<sup>3</sup></h2>{{ records(state.hazard_issues+state.graph.errors) }}</section>
+    <section class="panel"><h2>采信隔离</h2>{{ records(state.quarantine) }}</section>
+  </div>
+</div>{% endblock %}

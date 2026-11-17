@@ -29,6 +29,11 @@
 | TRAP-06 | 全角千分位 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/packaging/rules.py` | `tests/test_packaging.py::test_fullwidth_decimal` |
 | TRAP-20 | 拆并依赖环 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/grouping/rules.py` | `tests/test_grouping.py::test_cycle_real` |
 | TRAP-21 | 缺失父级 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/grouping/rules.py` | `tests/test_grouping.py::test_missing_parent_real` |
+| TRAP-22 | 新旧口径跨档 | 直接套新规则把历史托盘件数算偏 | 双口径并行换算+按可解释性逐提单裁决 | `app/modules/weight/rules.py` | `tests/test_caliber.py::test_old_caliber_kept_when_explainable` |
+| TRAP-23 | 非标准单位缺值 | 不可换算行按0参与求和 | 标记 N/A 阻断该父节点核对，原值保留 | `app/modules/weight/rules.py` | `tests/test_caliber.py::test_unconvertible_never_summed_as_zero` |
+| TRAP-24 | 已复核舱单被改写 | 切换口径静默覆盖 | 复核锁409，切换失败回滚不落库 | `app/main.py` | `tests/test_caliber.py::test_reviewed_run_caliber_locked` |
+| TRAP-25 | 重跑重复累计 | 差异被多次累加 | 内容寻址批号+INSERT OR IGNORE，幂等 | `app/store.py`,`app/engine.py` | `tests/test_caliber.py::test_rerun_does_not_accumulate` |
+| TRAP-26 | 未对平提单混入申报 | 总量含未守恒节点 | 排除主单单独列示，仅对平主单入汇总 | `app/modules/reconcile/rules.py` | `tests/test_caliber.py::test_excluded_roots_not_in_declaration_totals` |
 
 ## 对账规则
 

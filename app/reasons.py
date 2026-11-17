@@ -4,6 +4,10 @@ REASONS = {
     'BAD_UNIT':'单位不受支持', 'UNKNOWN_REFERENCE':'引用对象不存在', 'INVALID_RANGE':'范围错误',
     'VERSION_CONFLICT':'版本冲突', 'EMPTY_FILE':'空文件', 'BLANK_FILE':'全空行',
     'HEADER_ONLY':'仅有表头', 'STALE_VERSION':'复核版本已更新', 'NOT_FOUND':'批次不存在',
+    'BAD_DATE':'单据日期无效', 'NONSTANDARD_UNIT':'非标准单位在新口径下无换算',
+    'CALIBER_UNRESOLVED':'两种口径均无法解释原值与申报差异',
+    'CALIBER_LOCKED':'批次已复核，口径不得改写', 'CALIBER_SWITCH_FAILED':'口径切换失败，已回滚保留原值',
+    'ROOT_NOT_BALANCED':'提单未对平，排除出申报汇总', 'GRAPH_ROOT_BROKEN':'提单结构存在关系错误',
 }
 def reject(state, record, code, detail):
     state['quarantine'].append({'line':record.get('_line',0),'id':record.get('id',''),

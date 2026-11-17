@@ -5,4 +5,22 @@ if(filePicker){
  filePicker.addEventListener('change',async()=>{const file=filePicker.files[0];if(!file)return;if(file.size>2000000){editor.value='';alert('文件超过2MB，请缩小后导入');return;}const bytes=await file.arrayBuffer();try{editor.value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch(e){editor.value=new TextDecoder('gb18030',{fatal:true}).decode(bytes);}});
  document.querySelector('#import-csv').addEventListener('click',async event=>{event.target.disabled=true;try{const response=await fetch('/api/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csv_text:editor.value})});const data=await response.json();if(!response.ok)throw Error(data.detail);location.href=location.pathname+'?run_id='+data.manifest.run_id;}catch(e){editor.setCustomValidity(e.message);editor.reportValidity();}finally{event.target.disabled=false;}});
  editor.addEventListener('input',()=>editor.setCustomValidity(''));
-}
+ }
+const caliberMsg=document.querySelector('#caliber-message');
+document.querySelectorAll('.caliber-actions button').forEach(button=>{
+  button.addEventListener('click',async()=>{
+    if(button.disabled)return;
+    button.disabled=true;caliberMsg.textContent='口径核算中…';
+    try{
+      const policy=button.id==='caliber-new'?'force_new':'auto';
+      const response=await fetch('/api/runs/'+document.body.dataset.runId+'/caliber',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caliber:policy})});
+      const data=await response.json();
+      if(!response.ok)throw Error(data.detail||'口径切换失败');
+      const url=new URL(location.href);
+      url.searchParams.set('run_id',data.manifest.run_id);
+      location.href=url;
+    }catch(e){
+      caliberMsg.textContent=e.message;
+    }finally{button.disabled=false;}
+  });
+});
